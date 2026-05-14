@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { authPlugins } from 'mysql2';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { authPlugins } from 'mysql2';
           sha256_password: authPlugins.sha256_password,
         }
       }
-    })
+    }),
+    UserModule
   ],
   controllers: [AppController],
   providers: [AppService],
