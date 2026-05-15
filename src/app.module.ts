@@ -11,6 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from './user/entities/user.entity';
 import { Role } from './user/entities/role.entity';
 import { Permission } from './user/entities/permission.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -40,6 +41,14 @@ import { Permission } from './user/entities/permission.entity';
           namingStrategy: new SnakeNamingStrategy(), // 将数据库表和列名转换为下划线命名风格
         }
       },
+      inject: [ConfigService],
+    }),
+    JwtModule.registerAsync({
+      global: true,
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('jwt_secret'),
+        signOptions: { expiresIn: '30m' },
+      }),
       inject: [ConfigService],
     }),
     UserModule,
