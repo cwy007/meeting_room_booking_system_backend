@@ -187,7 +187,11 @@ export class UserService {
         new Map(
           user.roles
             .flatMap((role) => role.permissions)
-            .map((permission) => [permission.id, permission]),
+            .map((permission) => [permission.id, {
+              id: permission.id,
+              code: permission.code,
+              description: permission.description,
+            }]),
         ).values(),
       ),
     };
