@@ -20,6 +20,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RequireLogin, UserInfo } from 'src/custom.decorator';
 import { UserDetailVo } from './vo/user-detail.vo';
+import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 
 @Controller('user')
 export class UserController {
@@ -122,11 +123,22 @@ export class UserController {
     return vo;
   }
 
-  @Get('init-data')
-  async initData() {
-    await this.userService.initData();
-    return '初始化数据成功';
+  @Post(['update_password', 'admin/update_password'])
+  @RequireLogin()
+  async updatePassword(
+    @UserInfo('userId') userId: number,
+    @Body() updateUserPasswordDto: UpdateUserPasswordDto,
+  ) {
+    console.log('updateUserPasswordDto', updateUserPasswordDto);
+    return await this.userService.updatePassword(userId, updateUserPasswordDto);
   }
+
+  // 本地开发环境初始化数据
+  // @Get('init-data')
+  // async initData() {
+  //   await this.userService.initData();
+  //   return '初始化数据成功';
+  // }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
