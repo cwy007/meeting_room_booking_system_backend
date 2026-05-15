@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { authPlugins } from 'mysql2';
 import { UserModule } from './user/user.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
       },
       namingStrategy: new SnakeNamingStrategy(), // 将数据库表和列名转换为下划线命名风格
     }),
-    UserModule
+    UserModule,
+    RedisModule
   ],
   controllers: [AppController],
   providers: [AppService],
