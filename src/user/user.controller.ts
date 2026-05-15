@@ -171,9 +171,26 @@ export class UserController {
     return this.userService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  @Get('update/captcha')
+  async getUpdateCaptcha(@Query('email') email: string) {
+    const code = Math.random().toString(36).substring(2, 8);
+    console.log('请求修改信息验证码', email, code);
+
+    await this.redisService.set(`update_user_captcha_${email}`, code, 600);
+
+    await this.emailService.sendEmail(
+      email,
+      '会议室预订系统 - 修改信息验证码',
+      `<p>您的验证码是：<b>${code}</b>，有效期10分钟</p>`,
+    );
+
+    return '验证码已发送';
+  }
+
+  @Post(['update', 'admin/update'])
+  @RequireLogin()
+  update(@UserInfo('userId') userId: number, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(userId, updateUserDto);
   }
 
   @Delete(':id')

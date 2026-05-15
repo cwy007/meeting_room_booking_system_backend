@@ -196,8 +196,36 @@ export class UserService {
     return this.getLoginUserVo(user!);
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const captcha = await this.redisService.get(`update_user_captcha_${updateUserDto.email}`);
+    if (!captcha) {
+      throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
+    }
+
+    if (captcha !== updateUserDto.captcha) {
+      throw new HttpException('验证码错误', HttpStatus.BAD_REQUEST);
+    }
+
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    if (updateUserDto.headPic) {
+      user.headPic = updateUserDto.headPic;
+    }
+    if (updateUserDto.nickName) {
+      user.nickName = updateUserDto.nickName;
+    }
+
+    try {
+      await this.userRepository.save(user);
+      await this.redisService.set(`update_user_captcha_${updateUserDto.email}`, '', 0);
+      return '用户信息更新成功';
+    } catch (error) {
+      this.logger.error('用户信息更新失败', error.stack);
+      throw new HttpException('用户信息更新失败', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   remove(id: number) {
