@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { authPlugins } from 'mysql2';
 import { UserModule } from './user/user.module';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { UserModule } from './user/user.module';
         authPlugins: {
           sha256_password: authPlugins.sha256_password,
         }
-      }
+      },
+      namingStrategy: new SnakeNamingStrategy(), // 将数据库表和列名转换为下划线命名风格
     }),
     UserModule
   ],
