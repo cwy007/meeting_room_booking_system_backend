@@ -45,6 +45,12 @@ export class UserController {
     return this.userService.register(registerUserDto);
   }
 
+  @Get('init-data')
+  async initData() {
+    await this.userService.initData();
+    return '初始化数据成功';
+  }
+
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
