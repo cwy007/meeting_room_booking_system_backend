@@ -28,7 +28,7 @@ export class RegisterUserDto {
     message: '验证码不能为空',
   })
   @MinLength(4, {
-    message: '验证码长度不能小于4',
+    message: '验证码长度不能小于6位',
   })
   captcha: string;
 }

@@ -6,6 +6,7 @@ import { authPlugins } from 'mysql2';
 import { UserModule } from './user/user.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { RedisModule } from './redis/redis.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { RedisModule } from './redis/redis.module';
       namingStrategy: new SnakeNamingStrategy(), // 将数据库表和列名转换为下划线命名风格
     }),
     UserModule,
-    RedisModule
+    RedisModule,
+    EmailModule
   ],
   controllers: [AppController],
   providers: [AppService],
