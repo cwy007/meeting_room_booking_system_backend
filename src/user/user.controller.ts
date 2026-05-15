@@ -34,8 +34,8 @@ export class UserController {
 
   @Get('register-captcha')
   async getRegisterCaptcha(@Query('email') email: string) {
-    console.log('请求注册验证码', email);
     const code = Math.random().toString(36).substring(2, 8);
+    console.log('请求注册验证码', email, code);
 
     await this.redisService.set(`captcha:${email}`, code, 300);
 
@@ -121,6 +121,22 @@ export class UserController {
     vo.createTime = user.createTime.getTime();
 
     return vo;
+  }
+
+  @Get('update_password/captcha')
+  async getUpdatePasswordCaptcha(@Query('email') email: string) {
+    const code = Math.random().toString(36).substring(2, 8);
+    console.log('请求修改密码验证码', email, code);
+
+    await this.redisService.set(`update-password-captcha:${email}`, code, 600);
+
+    await this.emailService.sendEmail(
+      email,
+      '会议室预订系统 - 修改密码验证码',
+      `<p>您的验证码是：<b>${code}</b>，有效期10分钟</p>`,
+    );
+
+    return '验证码已发送';
   }
 
   @Post(['update_password', 'admin/update_password'])

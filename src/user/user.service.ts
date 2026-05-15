@@ -93,7 +93,7 @@ export class UserService {
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
-
+    const foo = md5(loginUserDto.password);
     if (user.password !== md5(loginUserDto.password)) {
       throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
     }
@@ -103,7 +103,7 @@ export class UserService {
 
   async updatePassword(userId: number, updateUserPasswordDto: UpdateUserPasswordDto) {
     const captcha = await this.redisService.get(
-      `captcha:reset_password:${updateUserPasswordDto.email}`,
+      `update-password-captcha:${updateUserPasswordDto.email}`,
     );
 
     if (!captcha) {
@@ -127,7 +127,7 @@ export class UserService {
 
     try {
       await this.userRepository.save(user);
-      await this.redisService.set(`captcha:reset_password:${updateUserPasswordDto.email}`, '', 0);
+      await this.redisService.set(`update-password-captcha:${updateUserPasswordDto.email}`, '', 0);
       return '密码更新成功';
     } catch (error) {
       this.logger.error('密码更新失败', error.stack);
