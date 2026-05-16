@@ -8,6 +8,10 @@ import {
   Delete,
   Query,
   UnauthorizedException,
+  ParseIntPipe,
+  HttpException,
+  HttpStatus,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -21,6 +25,7 @@ import { ConfigService } from '@nestjs/config';
 import { RequireLogin, UserInfo } from 'src/custom.decorator';
 import { UserDetailVo } from './vo/user-detail.vo';
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
+import { generateParseIntPipe } from 'src/utils';
 
 @Controller('user')
 export class UserController {
@@ -56,10 +61,11 @@ export class UserController {
 
   @Post('login')
   async login(@Body() loginUserDto: LoginUserDto) {
-    console.log('登录请求', loginUserDto)
+    console.log('登录请求', loginUserDto);
     const vo = await this.userService.login(loginUserDto);
 
-    const { accessToken, refreshToken } = this.userService.getAccessAndRefreshToken(vo);
+    const { accessToken, refreshToken } =
+      this.userService.getAccessAndRefreshToken(vo);
     vo.accessToken = accessToken;
     vo.refreshToken = refreshToken;
 
@@ -68,13 +74,13 @@ export class UserController {
 
   @Post('admin/login')
   async adminLogin(@Body() loginUserDto: LoginUserDto) {
-    console.log('登录请求', loginUserDto)
+    console.log('登录请求', loginUserDto);
     const vo = await this.userService.login(loginUserDto, true);
 
-    const { accessToken, refreshToken } = this.userService.getAccessAndRefreshToken(vo);
+    const { accessToken, refreshToken } =
+      this.userService.getAccessAndRefreshToken(vo);
     vo.accessToken = accessToken;
     vo.refreshToken = refreshToken;
-
 
     return vo;
   }
@@ -156,21 +162,6 @@ export class UserController {
   //   return '初始化数据成功';
   // }
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
-  }
-
   @Get('update/captcha')
   async getUpdateCaptcha(@Query('email') email: string) {
     const code = Math.random().toString(36).substring(2, 8);
@@ -189,12 +180,37 @@ export class UserController {
 
   @Post(['update', 'admin/update'])
   @RequireLogin()
-  update(@UserInfo('userId') userId: number, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @UserInfo('userId') userId: number,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return this.userService.update(userId, updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  @Get('freeze')
+  freezeUser(@Query('id', generateParseIntPipe('id')) id: number) {
+    return this.userService.freezeUserById(id);
+  }
+
+  @Get('unfreeze')
+  unfreezeUser(@Query('id', generateParseIntPipe('id')) id: number) {
+    return this.userService.freezeUserById(id, false);
+  }
+
+  @Get('list')
+  async list(
+    @Query('page', new DefaultValuePipe(1), generateParseIntPipe('page'))
+    page: number,
+    @Query(
+      'pageSize',
+      new DefaultValuePipe(10),
+      generateParseIntPipe('pageSize'),
+    )
+    pageSize: number,
+    @Query('username') username: string,
+    @Query('email') email: string,
+    @Query('nickName') nickName: string,
+  ) {
+    return await this.userService.findUsers(page, pageSize, username, email, nickName);
   }
 }

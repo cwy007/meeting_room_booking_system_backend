@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity({
   name: 'users',
@@ -23,6 +24,7 @@ export class User {
   })
   username: string;
 
+  @Exclude()
   @Column({
     length: 50,
     comment: '密码',

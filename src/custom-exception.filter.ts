@@ -14,7 +14,7 @@ export class CustomExceptionFilter<T extends HttpException> implements Exception
     response.status(status).json({
       code: status,
       message: 'fail',
-      data: res.message?.join(', ') || exception.message,
+      data: res.message?.join ? res.message?.join(', ') : exception.message,
     });
   }
 }

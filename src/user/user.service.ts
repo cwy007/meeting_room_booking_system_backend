@@ -9,7 +9,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { In, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { RedisService } from 'src/redis/redis.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { md5 } from 'src/utils';
@@ -175,16 +175,8 @@ export class UserService {
     await this.userRepository.save([user1, user2]);
   }
 
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
-
-  findAll() {
-    return `This action returns all user`;
-  }
-
-  findOne(id: number) {
-    return this.userRepository.findOneBy({ id });
+  async findOne(id: number) {
+    return await this.userRepository.findOneBy({ id });
   }
 
   async findUserById(userId: number, isAdmin = false) {
@@ -228,8 +220,42 @@ export class UserService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async freezeUserById(id: number, freeze = true) {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    user.isFrozen = freeze;
+
+    try {
+      await this.userRepository.save(user);
+      return freeze ? '用户已冻结' : '用户已解冻';
+    } catch (error) {
+      this.logger.error('冻结用户失败', error.stack);
+      throw new HttpException('冻结用户失败', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async findUsers(page: number, pageSize: number, username?: string, email?: string, nickName?: string) {
+    const [users, totalCount] = await this.userRepository.findAndCount({
+      select: ['id', 'username', 'nickName', 'email', 'headPic', 'phoneNumber', 'isFrozen', 'createTime'],
+      where: {
+        ...(username && { username: Like(`%${username}%`) }),
+        ...(email && { email: Like(`%${email}%`) }),
+        ...(nickName && { nickName: Like(`%${nickName}%`) }),
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      order: {
+        createTime: 'DESC',
+      },
+    });
+
+    return {
+      list: users,
+      totalCount,
+    };
   }
 
   getLoginUserVo(user: User) {
