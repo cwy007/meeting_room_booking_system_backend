@@ -3,7 +3,7 @@ import { IsNotEmpty } from "class-validator";
 
 export class LoginUserDto {
   @ApiProperty()
-  @IsNotEmpty({ message: '用户名不能为空' })
+  @IsNotEmpty({ message: '用户名/邮箱不能为空' })
   username: string;
 
   @ApiProperty()

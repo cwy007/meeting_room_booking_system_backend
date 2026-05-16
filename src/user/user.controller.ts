@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
   DefaultValuePipe,
   HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -80,6 +81,7 @@ export class UserController {
     description: '验证码已失效/验证码错误/用户名已存在',
     type: String,
   })
+  @HttpCode(HttpStatus.OK)
   @Post('register')
   register(@Body() registerUserDto: RegisterUserDto) {
     console.log(registerUserDto);
@@ -97,6 +99,7 @@ export class UserController {
     description: '用户不存在/密码错误',
     type: String,
   })
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Body() loginUserDto: LoginUserDto) {
     console.log('登录请求', loginUserDto);
@@ -121,6 +124,7 @@ export class UserController {
     description: '用户不存在/密码错误',
     type: String,
   })
+  @HttpCode(HttpStatus.OK)
   @Post('admin/login')
   async adminLogin(@Body() loginUserDto: LoginUserDto) {
     console.log('登录请求', loginUserDto);
@@ -151,6 +155,7 @@ export class UserController {
     description: 'token 已失效，请重新登录',
   })
   @Get('refresh')
+  @HttpCode(HttpStatus.OK)
   async refreshToken(@Query('refreshToken') refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken);
@@ -179,6 +184,7 @@ export class UserController {
     description: 'token 已失效，请重新登录',
   })
   @Get('admin/refresh')
+  @HttpCode(HttpStatus.OK)
   async adminRefreshToken(@Query('refreshToken') refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken);
@@ -248,7 +254,6 @@ export class UserController {
     return '验证码已发送';
   }
 
-  @ApiBearerAuth()
   @ApiBody({ type: UpdateUserPasswordDto })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -265,14 +270,13 @@ export class UserController {
     description: '密码更新失败',
     type: String,
   })
+  @HttpCode(HttpStatus.OK)
   @Post(['update_password', 'admin/update_password'])
-  @RequireLogin()
   async updatePassword(
-    @UserInfo('userId') userId: number,
     @Body() updateUserPasswordDto: UpdateUserPasswordDto,
   ) {
     console.log('updateUserPasswordDto', updateUserPasswordDto);
-    return await this.userService.updatePassword(userId, updateUserPasswordDto);
+    return await this.userService.updatePassword(updateUserPasswordDto);
   }
 
   // 本地开发环境初始化数据
@@ -327,6 +331,7 @@ export class UserController {
     description: '用户信息更新失败',
     type: String,
   })
+  @HttpCode(HttpStatus.OK)
   @Post(['update', 'admin/update'])
   @RequireLogin()
   update(

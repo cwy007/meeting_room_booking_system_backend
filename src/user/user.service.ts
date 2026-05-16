@@ -64,10 +64,10 @@ export class UserService {
       throw new HttpException('用户名已存在', HttpStatus.BAD_REQUEST);
     }
 
-    // const emailUser = await this.userRepository.findOneBy({ email: registerUserDto.email });
-    // if (emailUser) {
-    //   throw new HttpException('邮箱已存在', HttpStatus.BAD_REQUEST);
-    // }
+    const emailUser = await this.userRepository.findOneBy({ email: registerUserDto.email });
+    if (emailUser) {
+      throw new HttpException('邮箱已存在', HttpStatus.BAD_REQUEST);
+    }
 
     const newUser = new User();
     newUser.username = registerUserDto.username;
@@ -86,11 +86,16 @@ export class UserService {
   }
 
   async login(loginUserDto: LoginUserDto, isAdmin = false) {
-    const user = await this.userRepository.findOne({
+    let user = await this.userRepository.findOne({
       where: { username: loginUserDto.username, isAdmin },
       relations: ['roles', 'roles.permissions'],
     });
-
+    if (!user) {
+      user = await this.userRepository.findOne({
+        where: { email: loginUserDto.username, isAdmin },
+        relations: ['roles', 'roles.permissions'],
+      });
+    }
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
@@ -101,7 +106,7 @@ export class UserService {
     return this.getLoginUserVo(user);
   }
 
-  async updatePassword(userId: number, updateUserPasswordDto: UpdateUserPasswordDto) {
+  async updatePassword(updateUserPasswordDto: UpdateUserPasswordDto) {
     const captcha = await this.redisService.get(
       `update-password-captcha:${updateUserPasswordDto.email}`,
     );
@@ -114,14 +119,10 @@ export class UserService {
       throw new HttpException('验证码错误', HttpStatus.BAD_REQUEST);
     }
 
-    const user = await this.userRepository.findOneBy({ id: userId });
+    const user = await this.userRepository.findOneBy({ email: updateUserPasswordDto.email });
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
-
-    // if (user.email !== updateUserPasswordDto.email) {
-    //   throw new HttpException('邮箱不正确', HttpStatus.BAD_REQUEST);
-    // }
 
     user.password = md5(updateUserPasswordDto.password);
 
