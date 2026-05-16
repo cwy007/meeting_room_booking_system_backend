@@ -8,6 +8,9 @@ import {
   DefaultValuePipe,
   HttpStatus,
   HttpCode,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -25,6 +28,8 @@ import { ApiBearerAuth, ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/
 import { LoginUserVo } from './vo/login-user.vo';
 import { RefreshTokenVo } from './vo/refresh-token.vo';
 import { UserListVo } from './vo/user-list.vo';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { storage } from 'src/my-file-storage';
 
 @ApiTags('用户管理模块')
 @Controller('user')
@@ -42,7 +47,7 @@ export class UserController {
     type: String,
     description: '邮箱地址',
     required: true,
-    example: "chanweiyan007@gmail.com"
+    example: 'chanweiyan007@gmail.com',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -231,7 +236,7 @@ export class UserController {
     type: String,
     description: '邮箱地址',
     required: true,
-    example: "example@example.com",
+    example: 'example@example.com',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -272,9 +277,7 @@ export class UserController {
   })
   @HttpCode(HttpStatus.OK)
   @Post(['update_password', 'admin/update_password'])
-  async updatePassword(
-    @Body() updateUserPasswordDto: UpdateUserPasswordDto,
-  ) {
+  async updatePassword(@Body() updateUserPasswordDto: UpdateUserPasswordDto) {
     console.log('updateUserPasswordDto', updateUserPasswordDto);
     return await this.userService.updatePassword(updateUserPasswordDto);
   }
@@ -458,5 +461,43 @@ export class UserController {
       email,
       nickName,
     );
+  }
+
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '文件上传成功，返回文件路径',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: '只允许上传图片文件/文件不能超过5MB',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: '文件上传失败',
+    type: String,
+  })
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      // dest: './uploads',
+      storage,
+      limits: { fileSize: 5 * 1024 * 1024 }, // 限制文件大小为5MB
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('只允许上传图片文件'), false);
+        }
+      },
+    }),
+  )
+  @RequireLogin()
+  @HttpCode(HttpStatus.OK)
+  upload(@UploadedFile() file: Express.Multer.File) {
+    console.log('file', file);
+    return file.path;
   }
 }
