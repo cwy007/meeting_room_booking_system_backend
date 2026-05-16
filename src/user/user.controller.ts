@@ -3,18 +3,11 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   Query,
   UnauthorizedException,
-  ParseIntPipe,
-  HttpException,
-  HttpStatus,
   DefaultValuePipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RedisService } from 'src/redis/redis.service';
@@ -26,7 +19,9 @@ import { RequireLogin, UserInfo } from 'src/custom.decorator';
 import { UserDetailVo } from './vo/user-detail.vo';
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 import { generateParseIntPipe } from 'src/utils';
+// import { ApiTags } from '@nestjs/swagger'
 
+// @ApiTags('用户管理模块')
 @Controller('user')
 export class UserController {
   constructor(
@@ -211,6 +206,12 @@ export class UserController {
     @Query('email') email: string,
     @Query('nickName') nickName: string,
   ) {
-    return await this.userService.findUsers(page, pageSize, username, email, nickName);
+    return await this.userService.findUsers(
+      page,
+      pageSize,
+      username,
+      email,
+      nickName,
+    );
   }
 }
