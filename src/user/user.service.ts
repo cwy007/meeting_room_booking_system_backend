@@ -294,6 +294,7 @@ export class UserService {
     const accessToken = this.jwtService.sign({
       userId: userVo.userInfo.id,
       username: userVo.userInfo.username,
+      email: userVo.userInfo.email,
       roles: userVo.userInfo.roles,
       permissions: userVo.userInfo.permissions,
     }, {

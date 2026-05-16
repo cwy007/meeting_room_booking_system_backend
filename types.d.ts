@@ -3,6 +3,7 @@ import 'express'
 interface JwtPayload {
   userId: number;
   username: string;
+  email: string;
   roles: string[];
   permissions: {
     id: number;

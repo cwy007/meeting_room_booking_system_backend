@@ -286,22 +286,15 @@ export class UserController {
   //   return '初始化数据成功';
   // }
 
-  @ApiQuery({
-    name: 'email',
-    type: String,
-    description: '邮箱地址',
-    required: true,
-    example: "example@example.com",
-  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '验证码已发送',
     type: String,
   })
   @Get('update/captcha')
-  async getUpdateCaptcha(@Query('email') email: string) {
+  @RequireLogin()
+  async getUpdateCaptcha(@UserInfo('email') email: string) {
     const code = Math.random().toString(36).substring(2, 8);
-    console.log('请求修改信息验证码', email, code);
 
     await this.redisService.set(`update_user_captcha_${email}`, code, 600);
 
@@ -311,6 +304,7 @@ export class UserController {
       `<p>您的验证码是：<b>${code}</b>，有效期10分钟</p>`,
     );
 
+    console.log('请求修改信息验证码', email, code);
     return '验证码已发送';
   }
 
