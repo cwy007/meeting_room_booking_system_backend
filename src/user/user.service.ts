@@ -19,6 +19,8 @@ import { LoginUserVo } from './vo/login-user.vo';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
+import { RefreshTokenVo } from './vo/refresh-token.vo';
+import { UserListVo } from './vo/user-list.vo';
 
 @Injectable()
 export class UserService {
@@ -78,8 +80,8 @@ export class UserService {
       await this.redisService.set(`captcha:${registerUserDto.email}`, '', 0);
       return '注册成功';
     } catch (error) {
-      this.logger.error('注册失败', error.stack);
-      throw new HttpException('注册失败', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('用户保存失败', error.stack);
+      throw new HttpException('用户保存失败', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -92,7 +94,6 @@ export class UserService {
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
-    const foo = md5(loginUserDto.password);
     if (user.password !== md5(loginUserDto.password)) {
       throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
     }
@@ -251,10 +252,11 @@ export class UserService {
       },
     });
 
-    return {
-      list: users,
-      totalCount,
-    };
+    const vo = new UserListVo();
+    vo.list = users;
+    vo.totalCount = totalCount;
+
+    return vo;
   }
 
   getLoginUserVo(user: User) {
@@ -302,6 +304,10 @@ export class UserService {
       expiresIn: (this.configService.get<string>('jwt_refresh_token_expiration') || '7d') as '7d',
     });
 
-    return { accessToken, refreshToken };
+    const vo = new RefreshTokenVo();
+    vo.accessToken = accessToken;
+    vo.refreshToken = refreshToken;
+
+    return vo;
   }
 }

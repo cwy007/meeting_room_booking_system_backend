@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class UserDetailVo {
+class User {
   @ApiProperty({ description: '用户ID' })
   id: number;
 
@@ -19,9 +19,17 @@ export class UserDetailVo {
   @ApiProperty({ description: '手机号' })
   phoneNumber: string;
 
-  @ApiProperty({ description: '是否被冻结' })
+  @ApiProperty({ description: '是否冻结' })
   isFrozen: boolean;
 
   @ApiProperty({ description: '创建时间' })
-  createTime: number;
+  createTime: Date;
+}
+
+export class UserListVo {
+  @ApiProperty({ description: '用户列表', type: [User] })
+  list: User[];
+
+  @ApiProperty({ description: '总记录数' })
+  totalCount: number;
 }

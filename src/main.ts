@@ -23,6 +23,13 @@ async function bootstrap() {
     .setTitle('会议室预订系统')
     .setDescription('api 接口文档')
     .setVersion('1.0')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description: '基于 JWT 的鉴权',
+      name: 'Authorization',
+    })
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-doc', app, document);
