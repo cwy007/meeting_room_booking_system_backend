@@ -298,6 +298,7 @@ export class UserController {
   @RequireLogin()
   async getUpdateCaptcha(@UserInfo('email') email: string) {
     const code = Math.random().toString(36).substring(2, 8);
+    console.log('请求修改信息验证码', email, code);
 
     await this.redisService.set(`update_user_captcha_${email}`, code, 600);
 
