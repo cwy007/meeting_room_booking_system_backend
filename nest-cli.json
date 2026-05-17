@@ -8,11 +8,16 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "watchAssets": true,
-    "assets": [
-      {
-        "include": "*.env*",
-        "outDir": "dist"
+    "assets": [{
+      "include": "*.env*",
+      "outDir": "dist"
+    }],
+    "plugins": [{
+      "name": "@nestjs/swagger",
+      "options": {
+        "classValidatorShim": true,
+        "introspectComments": true,
       }
-    ]
+    }]
   }
 }
