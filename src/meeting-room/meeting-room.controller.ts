@@ -3,7 +3,7 @@ import { MeetingRoomService } from './meeting-room.service';
 import { CreateMeetingRoomDto } from './dto/create-meeting-room.dto';
 import { UpdateMeetingRoomDto } from './dto/update-meeting-room.dto';
 import { generateParseIntPipe } from 'src/utils';
-import { ApiBasicAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { ApiBasicAuth, ApiOperation, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { MeetingRoom } from './entities/meeting-room.entity';
 import { RequireLogin } from 'src/custom.decorator';
 
@@ -15,7 +15,6 @@ export class MeetingRoomController {
   constructor(private readonly meetingRoomService: MeetingRoomService) { }
 
   @ApiOperation({ summary: '创建会议室' })
-  @ApiBody({ type: CreateMeetingRoomDto })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '会议室创建成功',
@@ -33,11 +32,6 @@ export class MeetingRoomController {
   }
 
   @ApiOperation({ summary: '获取会议室列表' })
-  @ApiQuery({ name: 'page', required: false, description: '页码', example: 1 })
-  @ApiQuery({ name: 'pageSize', required: false, description: '每页数量', example: 10 })
-  @ApiQuery({ name: 'name', required: false, description: '会议室名称模糊搜索', example: '会议室' })
-  @ApiQuery({ name: 'capacity', required: false, description: '会议室容量精确搜索', example: 20 })
-  @ApiQuery({ name: 'equipment', required: false, description: '会议室设备模糊搜索', example: '投影仪' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '获取会议室列表成功',
@@ -70,7 +64,6 @@ export class MeetingRoomController {
   }
 
   @ApiOperation({ summary: '获取会议室详情' })
-  @ApiParam({ name: 'id', description: '会议室ID', example: 1 })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '获取会议室详情成功',
@@ -87,7 +80,6 @@ export class MeetingRoomController {
   }
 
   @ApiOperation({ summary: '更新会议室信息' })
-  @ApiBody({ type: UpdateMeetingRoomDto })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '会议室更新成功',
@@ -110,7 +102,6 @@ export class MeetingRoomController {
   }
 
   @ApiOperation({ summary: '删除会议室' })
-  @ApiParam({ name: 'id', description: '会议室ID', example: 1 })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '会议室删除成功',
