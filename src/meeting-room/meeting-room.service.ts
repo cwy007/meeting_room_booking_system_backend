@@ -1,33 +1,74 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateMeetingRoomDto } from './dto/create-meeting-room.dto';
 import { UpdateMeetingRoomDto } from './dto/update-meeting-room.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MeetingRoom } from './entities/meeting-room.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 
 @Injectable()
 export class MeetingRoomService {
   @InjectRepository(MeetingRoom)
   private readonly meetingRoomRepository: Repository<MeetingRoom>;
 
-  create(createMeetingRoomDto: CreateMeetingRoomDto) {
-    return 'This action adds a new meetingRoom';
+  async create(createMeetingRoomDto: CreateMeetingRoomDto) {
+    const existingRoom = await this.meetingRoomRepository.findOne({
+      where: { name: createMeetingRoomDto.name }
+    });
+    if (existingRoom) {
+      throw new HttpException('会议室名称已存在', HttpStatus.BAD_REQUEST);
+    }
+    return await this.meetingRoomRepository.save(createMeetingRoomDto);
   }
 
-  findAll() {
-    return `This action returns all meetingRoom`;
+  async findAll(page: number, pageSize: number, name: string, capacity: number, equipment: string) {
+    if (page < 1) {
+      page = 1;
+    }
+    if (pageSize < 1) {
+      pageSize = 10;
+    }
+    const [meetingRooms, totalAccount] = await this.meetingRoomRepository.findAndCount({
+      where: {
+        name: name ? Like(`%${name}%`) : undefined,
+        capacity: capacity || undefined,
+        equipment: equipment ? Like(`%${equipment}%`) : undefined,
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+    return { list: meetingRooms, totalAccount };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} meetingRoom`;
+  async findOne(id: number) {
+    return this.meetingRoomRepository.findOne({
+      where: { id }
+    });
   }
 
-  update(id: number, updateMeetingRoomDto: UpdateMeetingRoomDto) {
-    return `This action updates a #${id} meetingRoom`;
+  async update(updateMeetingRoomDto: UpdateMeetingRoomDto) {
+    const { id, ...updateData } = updateMeetingRoomDto;
+    const existingRoom = await this.meetingRoomRepository.findOne({
+      where: { id }
+    });
+    if (!existingRoom) {
+      throw new HttpException('会议室不存在', HttpStatus.NOT_FOUND);
+    }
+    if (updateData.name && updateData.name !== existingRoom.name) {
+      const nameConflict = await this.meetingRoomRepository.findOne({
+        where: { name: updateData.name }
+      });
+      if (nameConflict) {
+        throw new HttpException('会议室名称已存在', HttpStatus.BAD_REQUEST);
+      }
+    }
+
+    const updatedRoom = this.meetingRoomRepository.merge(existingRoom, updateData);
+    return await this.meetingRoomRepository.save(updatedRoom);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} meetingRoom`;
+  async remove(id: number) {
+    await this.meetingRoomRepository.delete(id);
+    return 'success';
   }
 
   initData() {
