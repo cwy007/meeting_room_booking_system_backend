@@ -8,6 +8,7 @@ import { UnLoginFilter } from './unlogin.filter';
 import { CustomExceptionFilter } from './custom-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { MeetingRoomModule } from './meeting-room/meeting-room.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -37,7 +38,9 @@ async function bootstrap() {
       name: 'Authorization',
     })
     .build();
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, config, {
+    include: [MeetingRoomModule],
+  });
   SwaggerModule.setup('api-doc', app, document);
 
   const configService = app.get(ConfigService);

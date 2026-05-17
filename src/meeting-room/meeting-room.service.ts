@@ -40,9 +40,13 @@ export class MeetingRoomService {
   }
 
   async findOne(id: number) {
-    return this.meetingRoomRepository.findOne({
+    const meetingRoom = await this.meetingRoomRepository.findOne({
       where: { id }
     });
+    if (!meetingRoom) {
+      throw new HttpException('会议室不存在', HttpStatus.NOT_FOUND);
+    }
+    return meetingRoom;
   }
 
   async update(updateMeetingRoomDto: UpdateMeetingRoomDto) {
@@ -67,11 +71,16 @@ export class MeetingRoomService {
   }
 
   async remove(id: number) {
+    const existingRoom = await this.meetingRoomRepository.findOne({ where: { id } });
+    if (!existingRoom) {
+      throw new HttpException('会议室不存在', HttpStatus.NOT_FOUND);
+    }
     await this.meetingRoomRepository.delete(id);
+
     return 'success';
   }
 
-  initData() {
+  async initData() {
     const meetingRooms = [
       {
         name: '第一会议室',
@@ -96,12 +105,12 @@ export class MeetingRoomService {
       },
     ];
 
-    meetingRooms.forEach(async (room) => {
+    for (const room of meetingRooms) {
       const existingRoom = await this.meetingRoomRepository.findOne({ where: { name: room.name } });
       if (!existingRoom) {
         const newRoom = this.meetingRoomRepository.create(room);
-        this.meetingRoomRepository.insert(newRoom);
+        await this.meetingRoomRepository.insert(newRoom);
       }
-    });
+    }
   }
 }
