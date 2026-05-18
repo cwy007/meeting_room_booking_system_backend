@@ -42,9 +42,10 @@ import { Booking } from './booking/entities/booking.entity';
           extra: {
             authPlugins: {
               sha256_password: authPlugins.sha256_password,
-            }
+            },
           },
           namingStrategy: new SnakeNamingStrategy(), // 将数据库表和列名转换为下划线命名风格
+          timezone: '+08:00', // 设置时区为东八区
         }
       },
       inject: [ConfigService],
