@@ -11,6 +11,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { MeetingRoomModule } from './meeting-room/meeting-room.module';
 import { BookingModule } from './booking/booking.module';
+import { StatisticModule } from './statistic/statistic.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -43,7 +44,7 @@ async function bootstrap() {
     })
     .build();
   const document = SwaggerModule.createDocument(app, config, {
-    include: [BookingModule],
+    include: [StatisticModule],
   });
   SwaggerModule.setup('api-doc', app, document);
 
