@@ -1,98 +1,83 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 会议室订阅系统
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## docker
 
 ```bash
-$ npm install
+docker compose build
+
+docker compose up
+
+#
+docker compose down --rmi all
+
 ```
 
-## Compile and run the project
+## 架构图
 
-```bash
-# development
-$ npm run start
+```mermaid
+graph TB
+    Client(["客户端 (前端 / API)"])
 
-# watch mode
-$ npm run start:dev
+    subgraph NestJS["NestJS 应用"]
+        direction TB
 
-# production mode
-$ npm run start:prod
+        subgraph GlobalMiddleware["全局中间件"]
+            LG["LoginGuard\nJWT 校验"]
+            PG["PermissionGuard\n权限校验"]
+            FRI["FormatResponseInterceptor\n统一响应格式"]
+            CSI["ClassSerializerInterceptor\n@Exclude 过滤"]
+            VP["ValidationPipe\nDTO 校验"]
+        end
+
+        subgraph Modules["业务模块"]
+            UM["UserModule\n注册 / 登录 / 修改信息 / 头像上传"]
+            MRM["MeetingRoomModule\n会议室 CRUD"]
+            BM["BookingModule\n预订 / 审批 / 催办"]
+            SM["StatisticModule\n统计分析"]
+        end
+
+        subgraph GlobalModules["全局基础模块 (@Global)"]
+            RM["RedisModule\nget / set / expire"]
+            EM["EmailModule\nNodemailer SMTP"]
+        end
+
+        Swagger["Swagger UI\n/api-doc\n(仅 BookingModule)"]
+    end
+
+    subgraph Infra["基础设施"]
+        MySQL[("MySQL\n会议室预订数据库")]
+        Redis[("Redis\n验证码 / 限流 / 缓存")]
+        SMTP["SMTP 邮件服务\nQQ Mail"]
+    end
+
+    subgraph DB_Tables["数据库实体"]
+        direction LR
+        T1["users"]
+        T2["roles"]
+        T3["permissions"]
+        T4["meeting_rooms"]
+        T5["bookings"]
+        T6["user_roles"]
+        T7["role_permissions"]
+    end
+
+    Client -->|"HTTP 请求 + Bearer Token"| GlobalMiddleware
+    GlobalMiddleware --> Modules
+    Modules --> GlobalModules
+
+    UM -->|TypeORM| MySQL
+    MRM -->|TypeORM| MySQL
+    BM -->|TypeORM| MySQL
+    SM -->|TypeORM| MySQL
+
+    RM --> Redis
+    BM -->|"催办限流 / admin_email 缓存"| Redis
+    UM -->|"验证码存取"| Redis
+
+    EM --> SMTP
+    BM -->|"催办通知邮件"| EM
+    UM -->|"注册 / 改密验证码"| EM
+
+    MySQL --- DB_Tables
+    Client -->|"访问文档"| Swagger
 ```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

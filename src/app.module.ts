@@ -19,12 +19,16 @@ import { MeetingRoom } from './meeting-room/entities/meeting-room.entity';
 import { BookingModule } from './booking/booking.module';
 import { Booking } from './booking/entities/booking.entity';
 import { StatisticModule } from './statistic/statistic.module';
+import * as path from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: 'src/.env',
+      envFilePath: path.join(
+        __dirname,
+        process.env.NODE_ENV === 'production' ? '.env.production' : '.env',
+      ),
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
@@ -36,7 +40,7 @@ import { StatisticModule } from './statistic/statistic.module';
           password: configService.get<string>('mysql_server_password'),
           database: configService.get<string>('mysql_server_database'),
           entities: [User, Role, Permission, MeetingRoom, Booking],
-          synchronize: true,
+          synchronize: false, // 生产环境建议关闭自动同步，使用迁移工具管理数据库结构
           logging: true,
           poolSize: 10,
           connectorPackage: 'mysql2',
@@ -47,7 +51,7 @@ import { StatisticModule } from './statistic/statistic.module';
           },
           namingStrategy: new SnakeNamingStrategy(), // 将数据库表和列名转换为下划线命名风格
           timezone: '+08:00', // 设置时区为东八区
-        }
+        };
       },
       inject: [ConfigService],
     }),
@@ -64,7 +68,7 @@ import { StatisticModule } from './statistic/statistic.module';
     EmailModule,
     MeetingRoomModule,
     BookingModule,
-    StatisticModule
+    StatisticModule,
   ],
   controllers: [AppController],
   providers: [
@@ -76,7 +80,7 @@ import { StatisticModule } from './statistic/statistic.module';
     {
       provide: 'APP_GUARD',
       useClass: PermissionGuard,
-    }
+    },
   ],
 })
 export class AppModule { }

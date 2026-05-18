@@ -44,7 +44,7 @@ async function bootstrap() {
     })
     .build();
   const document = SwaggerModule.createDocument(app, config, {
-    include: [StatisticModule],
+    // include: [StatisticModule],
   });
   SwaggerModule.setup('api-doc', app, document);
 

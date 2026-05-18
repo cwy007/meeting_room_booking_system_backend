@@ -1,0 +1,39 @@
+version: '5.1.3'
+services:
+  nest-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql-container
+      - redis-container
+    ports:
+      - '3000:3000'
+    networks:
+      - common-network
+
+  mysql-container:
+    image: mysql:latest
+    volumes:
+      - /Users/chanweiyan/Desktop/mysql-docker-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: Cwy17824
+      MYSQL_DATABASE: meeting_room_booking_system
+    ports:
+      - '3306:3306'
+    networks:
+      - common-network
+
+  redis-container:
+    image: redis:latest
+    ports:
+      - '6379:6379'
+    volumes:
+      - /Users/chanweiyan/Desktop/redis-docker-data:/data
+    networks:
+      - common-network
+
+networks:
+  common-network:
+    driver: bridge
