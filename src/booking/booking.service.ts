@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { UpdateBookingDto } from './dto/update-booking.dto';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
-import { Booking } from './entities/booking.entity';
+import { Booking, BookingStatus } from './entities/booking.entity';
 import { Between, EntityManager, Like, Repository } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { MeetingRoom } from 'src/meeting-room/entities/meeting-room.entity';
+import { RedisService } from 'src/redis/redis.service';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class BookingService {
@@ -15,8 +16,53 @@ export class BookingService {
   @InjectEntityManager()
   private readonly entityManager: EntityManager;
 
-  create(createBookingDto: CreateBookingDto) {
-    return 'This action adds a new booking';
+  @Inject(RedisService)
+  private readonly redisService: RedisService;
+
+  @Inject(EmailService)
+  private readonly emailService: EmailService;
+
+  async add(createBookingDto: CreateBookingDto, userId: number) {
+    const meetingRoomId = createBookingDto.meetingRoomId;
+    const startTime = new Date(createBookingDto.startTime);
+    const endTime = new Date(createBookingDto.endTime);
+    const note = createBookingDto.note;
+
+    const meetingRoom = await this.entityManager.findOneBy(MeetingRoom, {
+      id: meetingRoomId,
+    });
+    if (!meetingRoom) {
+      throw new HttpException('会议室不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    const user = await this.entityManager.findOneBy(User, {
+      id: userId,
+    });
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    const overlappingBooking = await this.bookingRepository.findOne({
+      where: {
+        room: {
+          id: meetingRoomId,
+        },
+        startTime: Between(startTime, endTime),
+      },
+    });
+    if (overlappingBooking) {
+      throw new HttpException('会议室在该时间段已被预订', HttpStatus.BAD_REQUEST);
+    }
+
+    const booking = new Booking();
+    booking.room = meetingRoom;
+    booking.user = user;
+    booking.startTime = startTime;
+    booking.endTime = endTime;
+    booking.note = note;
+
+    await this.entityManager.save(Booking, booking);
+    return booking;
   }
 
   async findAll(
@@ -52,16 +98,51 @@ export class BookingService {
     return { list: bookings, totalCount };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} booking`;
+  async approve(id: number) {
+    await this.bookingRepository.update(id, {
+      status: BookingStatus.APPROVED,
+    });
+    return id;
   }
 
-  update(id: number, updateBookingDto: UpdateBookingDto) {
-    return `This action updates a #${id} booking`;
+  async reject(id: number) {
+    await this.bookingRepository.update(id, {
+      status: BookingStatus.REJECTED,
+    });
+    return id;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} booking`;
+  async release(id: number) {
+    await this.bookingRepository.update(id, {
+      status: BookingStatus.RELEASED,
+    });
+    return id;
+  }
+
+  async urge(id: number) {
+    const flag = await this.redisService.get(`urge_${id}`);
+    if (flag) {
+      throw new HttpException('半小时内只能催办一次，请耐心等待', HttpStatus.BAD_REQUEST);
+    }
+
+    let email = await this.redisService.get('admin_email');
+    if (!email) {
+      const admin = await this.entityManager.findOne(User, {
+        where: {
+          isAdmin: true,
+        },
+      });
+      if (!admin) {
+        throw new HttpException('管理员不存在', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+      email = admin.email;
+      await this.redisService.set('admin_email', email, 60 * 60);
+    }
+
+    await this.emailService.sendEmail(email, '催办通知', `请尽快处理编号为 #${id} 的预订请求`);
+    await this.redisService.set(`urge_${id}`, '1', 30 * 60);
+
+    return 'success';
   }
 
   async initData() {

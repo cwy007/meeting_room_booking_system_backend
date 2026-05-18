@@ -1,16 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, DefaultValuePipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, DefaultValuePipe, HttpCode, HttpStatus } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { generateParseIntPipe } from 'src/utils';
+import { RequireLogin, UserInfo } from 'src/custom.decorator';
 
+@RequireLogin()
 @Controller('booking')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) { }
 
-  @Post()
-  create(@Body() createBookingDto: CreateBookingDto) {
-    return this.bookingService.create(createBookingDto);
+  @HttpCode(HttpStatus.OK)
+  @Post('add')
+  add(@Body() createBookingDto: CreateBookingDto, @UserInfo('userId') userId: number) {
+    return this.bookingService.add(createBookingDto, userId);
   }
 
   @Get('list')
@@ -26,19 +29,23 @@ export class BookingController {
     return this.bookingService.findAll(page, pageSize, username, roomName, roomLocation, bookingTimeRangeStart, bookingTimeRangeEnd);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bookingService.findOne(+id);
+  @Get('approve/:id')
+  approve(@Param('id') id: string) {
+    return this.bookingService.approve(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBookingDto: UpdateBookingDto) {
-    return this.bookingService.update(+id, updateBookingDto);
+  @Get('reject/:id')
+  reject(@Param('id') id: string) {
+    return this.bookingService.reject(+id);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bookingService.remove(+id);
+  @Get('release/:id')
+  release(@Param('id') id: string) {
+    return this.bookingService.release(+id);
   }
 
+  @Get('urge/:id')
+  urge(@Param('id') id: string) {
+    return this.bookingService.urge(+id);
+  }
 }
