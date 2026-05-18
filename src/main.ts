@@ -10,6 +10,7 @@ import { CustomExceptionFilter } from './custom-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { MeetingRoomModule } from './meeting-room/meeting-room.module';
+import { BookingModule } from './booking/booking.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -42,7 +43,7 @@ async function bootstrap() {
     })
     .build();
   const document = SwaggerModule.createDocument(app, config, {
-    include: [MeetingRoomModule],
+    include: [BookingModule],
   });
   SwaggerModule.setup('api-doc', app, document);
 
