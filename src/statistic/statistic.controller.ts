@@ -1,7 +1,8 @@
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { StatisticService } from './statistic.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('统计分析')
 @Controller('statistic')
 export class StatisticController {
   @Inject(StatisticService)
