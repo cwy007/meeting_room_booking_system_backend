@@ -539,6 +539,6 @@ export class UserController {
     res.cookie('accessToken', accessToken);
     res.cookie('refreshToken', refreshToken);
 
-    res.redirect('http://localhost:3000'); // 登录成功后重定向到前端页面
+    res.redirect('http://localhost:5173/'); // 登录成功后重定向到前端页面
   }
 }
