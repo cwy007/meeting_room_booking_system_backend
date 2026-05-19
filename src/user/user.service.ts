@@ -87,12 +87,12 @@ export class UserService {
 
   async login(loginUserDto: LoginUserDto, isAdmin = false) {
     let user = await this.userRepository.findOne({
-      where: { username: loginUserDto.username, isAdmin },
+      where: { username: loginUserDto.username, ...(isAdmin && { isAdmin }) },
       relations: ['roles', 'roles.permissions'],
     });
     if (!user) {
       user = await this.userRepository.findOne({
-        where: { email: loginUserDto.username, isAdmin },
+        where: { email: loginUserDto.username, ...(isAdmin && { isAdmin }) },
         relations: ['roles', 'roles.permissions'],
       });
     }

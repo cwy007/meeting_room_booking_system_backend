@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, DefaultValuePipe, Query, Put, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, DefaultValuePipe, Query, Put, HttpStatus, HttpCode, Req } from '@nestjs/common';
 import { MeetingRoomService } from './meeting-room.service';
 import { CreateMeetingRoomDto } from './dto/create-meeting-room.dto';
 import { UpdateMeetingRoomDto } from './dto/update-meeting-room.dto';
@@ -6,6 +6,7 @@ import { generateParseIntPipe } from 'src/utils';
 import { ApiBasicAuth, ApiOperation, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { MeetingRoom } from './entities/meeting-room.entity';
 import { RequireLogin } from 'src/custom.decorator';
+import { type Request } from 'express';
 
 @ApiTags('会议室管理')
 @ApiBasicAuth()
@@ -59,7 +60,9 @@ export class MeetingRoomController {
     @Query('name') name: string,
     @Query('capacity') capacity: number,
     @Query('equipment') equipment: string,
+    @Req() req: Request,
   ) {
+    console.log('请求用户信息', req.user);
     return this.meetingRoomService.findAll(page, pageSize, name, capacity, equipment);
   }
 

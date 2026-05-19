@@ -34,6 +34,7 @@ export class User {
   @Column({
     length: 50,
     comment: '昵称',
+    nullable: true,
   })
   nickName: string;
 

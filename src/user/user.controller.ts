@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -30,6 +31,7 @@ import { RefreshTokenVo } from './vo/refresh-token.vo';
 import { UserListVo } from './vo/user-list.vo';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { storage } from 'src/my-file-storage';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('用户管理模块')
 @Controller('user')
@@ -105,10 +107,11 @@ export class UserController {
     type: String,
   })
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto) {
-    console.log('登录请求', loginUserDto);
-    const vo = await this.userService.login(loginUserDto);
+  async login(@UserInfo() vo: LoginUserVo) {
+    console.log('登录请求', vo);
+    // const vo = await this.userService.login(loginUserDto);
 
     const { accessToken, refreshToken } =
       this.userService.getAccessAndRefreshToken(vo);
