@@ -12,10 +12,12 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { MeetingRoomModule } from './meeting-room/meeting-room.module';
 import { BookingModule } from './booking/booking.module';
 import { StatisticModule } from './statistic/statistic.module';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  app.use(cookieParser());
   app.enableCors();
   app.useStaticAssets('uploads', {
     prefix: '/uploads',

@@ -12,6 +12,8 @@ import {
   UploadedFile,
   BadRequestException,
   UseGuards,
+  Req,
+  Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -32,6 +34,7 @@ import { UserListVo } from './vo/user-list.vo';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { storage } from 'src/my-file-storage';
 import { AuthGuard } from '@nestjs/passport';
+import { type Response } from 'express';
 
 @ApiTags('用户管理模块')
 @Controller('user')
@@ -229,6 +232,7 @@ export class UserController {
     vo.headPic = user.headPic;
     vo.phoneNumber = user.phoneNumber;
     vo.isFrozen = user.isFrozen;
+    vo.loginType = user.loginType;
     vo.createTime = user.createTime.getTime();
 
     return vo;
@@ -503,5 +507,38 @@ export class UserController {
   upload(@UploadedFile() file: Express.Multer.File) {
     console.log('file', file);
     return file.path;
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleLogin() {
+    // 这个方法不会被调用，因为请求会被 Passport 的 GoogleStrategy 处理掉
+  }
+
+  @Get('callback/google')
+  @UseGuards(AuthGuard('google'))
+  async googleLoginCallback(@Req() req: any, @Res() res: Response) {
+    console.log('Google 登录回调', req.user);
+
+    if (!req.user) {
+      throw new UnauthorizedException('Google 登录失败');
+    }
+
+    const vo = await this.userService.registerByGoogle(
+      req.user.email,
+      req.user.firstName + ' ' + req.user.lastName,
+      req.user.picture,
+    );
+
+    const { accessToken, refreshToken } =
+      this.userService.getAccessAndRefreshToken(vo);
+    vo.accessToken = accessToken;
+    vo.refreshToken = refreshToken;
+
+    res.cookie('userInfo', JSON.stringify(vo.userInfo));
+    res.cookie('accessToken', accessToken);
+    res.cookie('refreshToken', refreshToken);
+
+    res.redirect('http://localhost:3000'); // 登录成功后重定向到前端页面
   }
 }

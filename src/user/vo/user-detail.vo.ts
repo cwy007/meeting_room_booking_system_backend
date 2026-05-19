@@ -24,4 +24,7 @@ export class UserDetailVo {
 
   @ApiProperty({ description: '创建时间' })
   createTime: number;
+
+  @ApiProperty({ description: '登录类型: 0-用户名密码登录，1-Google登录，2-GitHub登录' })
+  loginType: number;
 }

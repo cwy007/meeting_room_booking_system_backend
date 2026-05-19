@@ -10,6 +10,12 @@ import {
 import { Role } from './role.entity';
 import { Exclude } from 'class-transformer';
 
+export enum LoginType {
+  USERNAME_PASSWORD = 0,
+  GOOGLE = 1,
+  GITHUB = 2,
+}
+
 @Entity({
   name: 'users',
 })
@@ -86,4 +92,12 @@ export class User {
     name: 'user_roles',
   })
   roles: Role[];
+
+  @Column({
+    type: 'enum',
+    enum: LoginType,
+    default: LoginType.USERNAME_PASSWORD,
+    comment: '登录类型: 0-用户名密码登录，1-Google登录，2-GitHub登录',
+  })
+  loginType: LoginType;
 }

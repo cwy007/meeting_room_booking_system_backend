@@ -43,6 +43,9 @@ class UserInfo {
     code: string;
     description: string;
   }[];
+
+  @ApiProperty({ description: '登录类型: 0-用户名密码登录，1-Google登录，2-GitHub登录' })
+  loginType: number;
 }
 
 export class LoginUserVo {

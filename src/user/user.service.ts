@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
+import { LoginType, User } from './entities/user.entity';
 import { Like, Repository } from 'typeorm';
 import { RedisService } from 'src/redis/redis.service';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -79,6 +79,31 @@ export class UserService {
       await this.userRepository.save(newUser);
       await this.redisService.set(`captcha:${registerUserDto.email}`, '', 0);
       return '注册成功';
+    } catch (error) {
+      this.logger.error('用户保存失败', error.stack);
+      throw new HttpException('用户保存失败', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async registerByGoogle(email: string, nickName: string, headPic: string) {
+    const user = await this.userRepository.findOneBy({
+      email,
+    });
+    if (user) {
+      return this.getLoginUserVo(user);
+    }
+    const newUser = new User();
+    newUser.username = email + '_' + Date.now();
+    newUser.password = '';
+    newUser.nickName = nickName;
+    newUser.email = email;
+    newUser.headPic = headPic;
+    newUser.loginType = LoginType.GOOGLE;
+    newUser.isAdmin = false;
+
+    try {
+      const user = await this.userRepository.save(newUser);
+      return this.getLoginUserVo(user);
     } catch (error) {
       this.logger.error('用户保存失败', error.stack);
       throw new HttpException('用户保存失败', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -271,13 +296,14 @@ export class UserService {
       phoneNumber: user.phoneNumber,
       isFrozen: user.isFrozen,
       isAdmin: user.isAdmin,
+      loginType: user.loginType,
       createTime: user.createTime.valueOf(),
-      roles: user.roles.map((role) => role.name),
+      roles: (user.roles || []).map((role) => role.name),
       // unique permissions by id
       permissions: Array.from(
         new Map(
-          user.roles
-            .flatMap((role) => role.permissions)
+          (user.roles || [])
+            .flatMap((role) => role.permissions || [])
             .map((permission) => [permission.id, {
               id: permission.id,
               code: permission.code,

@@ -41,7 +41,7 @@ import * as path from 'path';
           password: configService.get<string>('mysql_server_password'),
           database: configService.get<string>('mysql_server_database'),
           entities: [User, Role, Permission, MeetingRoom, Booking],
-          synchronize: false, // 生产环境建议关闭自动同步，使用迁移工具管理数据库结构
+          synchronize: true, // 生产环境建议关闭自动同步，使用迁移工具管理数据库结构
           logging: true,
           poolSize: 10,
           connectorPackage: 'mysql2',
