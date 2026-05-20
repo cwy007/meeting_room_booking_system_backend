@@ -21,6 +21,10 @@ import { Booking } from './booking/entities/booking.entity';
 import { StatisticModule } from './statistic/statistic.module';
 import { AuthModule } from './auth/auth.module';
 import * as path from 'path';
+import { utilities, WINSTON_MODULE_NEST_PROVIDER, WinstonLogger, WinstonModule } from 'nest-winston';
+import winston from 'winston';
+import { CustomTypeOrmLogger } from './CustomTypeOrmLogger';
+import 'winston-daily-rotate-file';
 
 @Module({
   imports: [
@@ -32,7 +36,7 @@ import * as path from 'path';
       ),
     }),
     TypeOrmModule.forRootAsync({
-      useFactory: (configService: ConfigService) => {
+      useFactory: (configService: ConfigService, logger: WinstonLogger) => {
         return {
           type: 'mysql',
           host: configService.get<string>('mysql_server_host'),
@@ -43,6 +47,7 @@ import * as path from 'path';
           entities: [User, Role, Permission, MeetingRoom, Booking],
           synchronize: true, // 生产环境建议关闭自动同步，使用迁移工具管理数据库结构
           logging: true,
+          logger: new CustomTypeOrmLogger(logger),
           poolSize: 10,
           connectorPackage: 'mysql2',
           extra: {
@@ -54,7 +59,7 @@ import * as path from 'path';
           timezone: '+08:00', // 设置时区为东八区
         };
       },
-      inject: [ConfigService],
+      inject: [ConfigService, WINSTON_MODULE_NEST_PROVIDER],
     }),
     JwtModule.registerAsync({
       global: true,
@@ -63,6 +68,41 @@ import * as path from 'path';
         signOptions: { expiresIn: '30m' },
       }),
       inject: [ConfigService],
+    }),
+    WinstonModule.forRootAsync({
+      useFactory: () => ({
+        level: 'debug',
+        transports: [
+          // new winston.transports.File({
+          //   filename: `${process.cwd()}/log`,
+          // }),
+          new winston.transports.DailyRotateFile({
+            level: 'debug',
+            dirname: `${process.cwd()}/logs`,
+            filename: 'application-%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            // maxFiles: '14d',
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              utilities.format.nestLike(),
+            ),
+          }),
+          new winston.transports.Console({
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              utilities.format.nestLike(),
+            ),
+          }),
+          // new winston.transports.Http({
+          //   level: 'error',
+          //   host: 'localhost',
+          //   port: 9200,
+          //   path: '/logs',
+          // })
+        ],
+      })
     }),
     UserModule,
     RedisModule,
